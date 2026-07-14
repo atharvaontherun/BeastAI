@@ -102,7 +102,7 @@ export function useSpeechRecognition({
         /* noop */
       }
     }
-  }, [onFinalResult])
+  }, [onFinalResult, wakeWordEnabled, wakeWord])
 
   const start = useCallback(() => {
     const rec = recognitionRef.current
@@ -110,6 +110,7 @@ export function useSpeechRecognition({
     finalRef.current = ''
     setInterim('')
     try {
+      console.log("Starting speech recognition...");
       rec.start()
       setListening(true)
     } catch {
