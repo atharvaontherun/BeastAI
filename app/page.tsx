@@ -3,6 +3,7 @@ import { think } from "@/lib/brain";
 import { openWebsite } from "@/lib/browser";
 import { useCallback, useMemo, useState } from 'react'
 import { useChat } from '@ai-sdk/react'
+import { useEffect } from "react";
 import { DefaultChatTransport, type UIMessage } from 'ai'
 import { Activity, Cpu, Volume2, VolumeX, Wifi } from 'lucide-react'
 import { CommandBar } from '@/components/command-bar'
@@ -12,6 +13,7 @@ import { Waveform } from '@/components/waveform'
 import { useJarvisVoice } from '@/hooks/use-jarvis-voice'
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition'
 import { cn } from '@/lib/utils'
+
 
 function extractText(message: UIMessage): string {
   return message.parts
@@ -35,6 +37,12 @@ export default function Page() {
   })
 
   const thinking = status === 'submitted' || status === 'streaming'
+
+  const [wakeWordEnabled, setWakeWordEnabled] = useState(false);
+const [assistantState, setAssistantState] = useState<
+  "idle" | "listening" | "thinking" | "speaking"
+>("idle");
+
 
 const submit = useCallback(
   (text: string) => {
@@ -71,9 +79,16 @@ const submit = useCallback(
   },
   [sendMessage, stopVoice]
 );
-  const { supported: micSupported, listening, interim, start, stop } = useSpeechRecognition({
-    onFinalResult: (text) => submit(text),
-  })
+const {
+  supported: micSupported,
+  listening,
+  interim,
+  start,
+  stop,
+} = useSpeechRecognition({
+  onFinalResult: (text) => submit(text),
+  wakeWordEnabled,
+})
 
   const coreState: CoreState = useMemo(() => {
     if (listening) return 'listening'
@@ -90,7 +105,15 @@ const submit = useCallback(
       start()
     }
   }
+useEffect(() => {
+  if (!wakeWordEnabled) {
+    stop();
+    return;
+  }
 
+  stopVoice();
+  start();
+}, [wakeWordEnabled, start, stop, stopVoice]);
   const toggleVoice = () => {
     if (voiceEnabled) stopVoice()
     setVoiceEnabled((v) => !v)
@@ -122,9 +145,20 @@ const submit = useCallback(
         </div>
 
         <div className="flex items-center gap-4 font-mono text-[10px] tracking-widest text-muted-foreground">
-          <span className="hidden items-center gap-1.5 sm:flex">
+                    <button
+    onClick={() => setWakeWordEnabled(!wakeWordEnabled)}
+    className={`px-4 py-2 rounded-full transition ${
+      wakeWordEnabled
+        ? "bg-cyan-500 text-white"
+        : "bg-gray-700 text-gray-300"
+    }`}
+  >
+    {wakeWordEnabled ? "👀" : "⏻"}
+  </button>
+  <span className="hidden items-center gap-1.5 sm:flex">
             <Wifi className="h-3.5 w-3.5 text-primary" /> ONLINE
           </span>
+
           <span className="hidden items-center gap-1.5 sm:flex">
             <Activity className="h-3.5 w-3.5 text-accent" /> {coreState.toUpperCase()}
           </span>
@@ -158,7 +192,11 @@ const submit = useCallback(
             {listening && interim ? (
               <span className="text-foreground">{interim}</span>
             ) : listening ? (
-              <span className="animate-flicker text-primary">Listening for your command…</span>
+              <span className="animate-flicker text-primary">
+  {wakeWordEnabled
+    ? "Say 'BEAST'..."
+    : "Listening for your command..."}
+</span>
             ) : speaking ? (
               <span className="text-accent">Responding…</span>
             ) : thinking ? (

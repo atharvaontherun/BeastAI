@@ -16,8 +16,12 @@ type SpeechRecognitionLike = {
 
 export function useSpeechRecognition({
   onFinalResult,
+  wakeWordEnabled = false,
+  wakeWord = "beast",
 }: {
   onFinalResult: (text: string) => void
+  wakeWordEnabled?: boolean
+  wakeWord?: string
 }) {
   const [supported, setSupported] = useState(false)
   const [listening, setListening] = useState(false)
@@ -35,39 +39,57 @@ export function useSpeechRecognition({
     setSupported(true)
     const recognition: SpeechRecognitionLike = new SR()
     recognition.lang = 'en-US'
-    recognition.continuous = false
+    recognition.continuous = wakeWordEnabled
     recognition.interimResults = true
 
     recognition.onresult = (event: any) => {
-      let interimText = ''
-      let finalText = ''
-      for (let i = event.resultIndex; i < event.results.length; i++) {
-        const transcript = event.results[i][0].transcript
-        if (event.results[i].isFinal) {
-          finalText += transcript
-        } else {
-          interimText += transcript
-        }
-      }
-      if (interimText) setInterim(interimText)
-      if (finalText) {
-        finalRef.current += finalText
-        setInterim(finalRef.current)
+  let interimText = ""
+  let finalText = ""
+
+  for (let i = event.resultIndex; i < event.results.length; i++) {
+    const transcript = event.results[i][0].transcript
+
+    if (event.results[i].isFinal) {
+      finalText += transcript
+    } else {
+      interimText += transcript
+    }
+  }
+
+  setInterim(interimText)
+
+  if (!finalText) return
+
+  const spoken = finalText.trim().toLowerCase()
+
+  if (wakeWordEnabled) {
+    if (spoken.startsWith(wakeWord.toLowerCase())) {
+      const command = spoken.replace(wakeWord.toLowerCase(), "").trim()
+
+      if (command.length > 0) {
+        onFinalResult(command)
       }
     }
+  } else {
+    onFinalResult(finalText.trim())
+  }
+}
 
     recognition.onerror = () => {
       setListening(false)
     }
 
     recognition.onend = () => {
-      setListening(false)
-      setInterim('')
-      const result = finalRef.current.trim()
-      finalRef.current = ''
-      if (result) onFinalResult(result)
-    }
+  setListening(false)
+  setInterim("")
 
+  if (wakeWordEnabled) {
+    try {
+      recognition.start()
+      setListening(true)
+    } catch {}
+  }
+}
     recognitionRef.current = recognition
 
     return () => {
