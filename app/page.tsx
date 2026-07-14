@@ -13,7 +13,7 @@ import { Waveform } from '@/components/waveform'
 import { useJarvisVoice } from '@/hooks/use-jarvis-voice'
 import { useSpeechRecognition } from '@/hooks/use-speech-recognition'
 import { cn } from '@/lib/utils'
-
+import { openDesktopApp } from "@/lib/desktop";
 
 function extractText(message: UIMessage): string {
   return message.parts
@@ -45,7 +45,7 @@ const [assistantState, setAssistantState] = useState<
 
 
 const submit = useCallback(
-  (text: string) => {
+  async (text: string) => {
     const value = text.trim();
     if (!value) return;
 
@@ -53,6 +53,31 @@ const submit = useCallback(
 
     const decision = think(value);
 
+    const lower = value.toLowerCase();
+
+if (lower.includes("open vscode") || lower.includes("open visual studio code")) {
+  await openDesktopApp("vscode");
+  setInput("");
+  return;
+}
+
+if (lower.includes("open spotify")) {
+  await openDesktopApp("spotify");
+  setInput("");
+  return;
+}
+
+if (lower.includes("open discord")) {
+  await openDesktopApp("discord");
+  setInput("");
+  return;
+}
+
+if (lower.includes("open calculator")) {
+  await openDesktopApp("calculator");
+  setInput("");
+  return;
+}
     switch (decision.action) {
       case "OPEN_WEBSITE":
         if (decision.target) {
