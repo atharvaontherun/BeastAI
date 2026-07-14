@@ -87,7 +87,7 @@ export function ConversationLog({
               ) : (
                 <>
                   <span className="h-1.5 w-1.5 rounded-full bg-accent" />
-                  <span className="text-accent">JARVIS</span>
+                  <span className="text-accent">BEAST</span>
                 </>
               )}
             </div>
