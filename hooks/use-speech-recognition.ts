@@ -39,7 +39,7 @@ export function useSpeechRecognition({
     setSupported(true)
     const recognition: SpeechRecognitionLike = new SR()
     recognition.lang = 'en-US'
-    recognition.continuous = wakeWordEnabled
+    recognition.continuous = false
     recognition.interimResults = true
 
     recognition.onresult = (event: any) => {
@@ -82,13 +82,6 @@ export function useSpeechRecognition({
     recognition.onend = () => {
   setListening(false)
   setInterim("")
-
-  if (wakeWordEnabled) {
-    try {
-      recognition.start()
-      setListening(true)
-    } catch {}
-  }
 }
     recognitionRef.current = recognition
 
@@ -104,29 +97,39 @@ export function useSpeechRecognition({
     }
   }, [onFinalResult, wakeWordEnabled, wakeWord])
 
-  const start = useCallback(() => {
-    const rec = recognitionRef.current
-    if (!rec || listening) return
-    finalRef.current = ''
-    setInterim('')
-    try {
-      console.log("Starting speech recognition...");
-      rec.start()
-      setListening(true)
-    } catch {
-      /* already started */
-    }
-  }, [listening])
+ 
+const start = useCallback(async () => {
+  const rec = recognitionRef.current
+  if (!rec || listening) return
 
-  const stop = useCallback(() => {
-    const rec = recognitionRef.current
-    if (!rec) return
-    try {
-      rec.stop()
-    } catch {
-      /* noop */
-    }
-  }, [])
+  finalRef.current = ""
+  setInterim("")
+
+  try {
+    await navigator.mediaDevices.getUserMedia({ audio: true })
+
+    console.log("Starting recognition")
+
+    rec.start()
+    setListening(true)
+  } catch (err) {
+    console.error(err)
+  }
+}, [listening])
+
+const stop = useCallback(() => {
+  const rec = recognitionRef.current
+  if (!rec) return
+
+  setListening(false)
+  setInterim("")
+
+  try {
+    rec.stop()
+  } catch {
+    /* noop */
+  }
+}, [])
 
   return { supported, listening, interim, start, stop }
 }

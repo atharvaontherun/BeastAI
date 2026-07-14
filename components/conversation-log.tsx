@@ -116,7 +116,7 @@ export function ConversationLog({
       {thinking && (
         <div className="flex items-center gap-2 font-mono text-xs text-primary">
           <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          <span className="animate-flicker tracking-wider">JARVIS is thinking…</span>
+          <span className="animate-flicker tracking-wider">BEAST is thinking…</span>
         </div>
       )}
 
