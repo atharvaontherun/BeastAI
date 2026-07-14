@@ -8,7 +8,7 @@ const geistMono = Geist_Mono({ subsets: ['latin'], variable: '--font-geist-mono'
 const orbitron = Orbitron({ subsets: ['latin'], variable: '--font-orbitron' })
 
 export const metadata: Metadata = {
-  title: 'B.E.A.S.T — By Atharva',
+  title: 'B.E.A.S.T ATHARVA',
   description: 'A JARVIS-style AI voice assistant with live search, streaming responses, and voice output.',
   generator: 'ATHARVA',
 }
